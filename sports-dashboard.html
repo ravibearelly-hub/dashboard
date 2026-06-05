@@ -1482,8 +1482,8 @@ function renderActivities() {
         <div class="activity-name">${escHtml(a.name)}</div>
         <div class="stats-row">
           <div class="stat"><span class="stat-val">${fmtDist(a.distance)}</span><span class="stat-key">Distance</span></div>
-          <div class="stat"><span class="stat-val">${fmtTime(a.moving_time)}</span><span class="stat-key">Time</span></div>
           <div class="stat"><span class="stat-val">${fmtPace(a.distance, a.moving_time)}</span><span class="stat-key">Pace /500m</span></div>
+          <div class="stat"><span class="stat-val">${fmtTime(a.moving_time)}</span><span class="stat-key">Time</span></div>
           ${hrStat}
         </div>
       </div>`;
