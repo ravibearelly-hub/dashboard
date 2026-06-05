@@ -2112,7 +2112,9 @@ function renderCandleChart(canvas, data, unit) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#0d1117', titleColor: '#edf1f9', bodyColor: '#8aa0c0',
+          backgroundColor: '#0d1117',
+          titleColor: ctx => { const c = candles[ctx.tooltip?.dataPoints?.[0]?.dataIndex ?? 0]; return c && c.c >= c.o ? '#22c55e' : '#ef4444'; },
+          bodyColor: '#8aa0c0',
           borderColor: '#242424', borderWidth: 1, padding: 12,
           callbacks: {
             title: items => {
@@ -2123,10 +2125,6 @@ function renderCandleChart(canvas, data, unit) {
               const c = candles[item.dataIndex];
               const color = c.c >= c.o ? '#22c55e' : '#ef4444';
               return { borderColor: color, backgroundColor: color };
-            },
-            labelTextColor: item => {
-              const c = candles[item.dataIndex];
-              return c.c >= c.o ? '#22c55e' : '#ef4444';
             },
             label: item => {
               const c = candles[item.dataIndex];
