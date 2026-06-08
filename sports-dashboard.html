@@ -1923,32 +1923,53 @@ function updateUnitLabels() {
 // ─── TOUCH TOOLTIP ───────────────────────────────────────────────────────────
 function enableTouchTooltip(chart) {
   const canvas = chart.canvas;
+
+  function findNearestIndex(x) {
+    const xScale = chart.scales.x;
+    if (!xScale) return -1;
+    // {x, y} datasets (time scale) — look up by data point x value
+    const ds = chart.data.datasets[0];
+    if (ds && ds.data.length && ds.data[0] !== null && typeof ds.data[0] === 'object' && 'x' in ds.data[0]) {
+      let nearest = { index: -1, dist: Infinity };
+      ds.data.forEach((pt, i) => {
+        const d = Math.abs(xScale.getPixelForValue(pt.x) - x);
+        if (d < nearest.dist) nearest = { index: i, dist: d };
+      });
+      return nearest.index;
+    }
+    // Categorical / index scale — look up by label index
+    let nearest = { index: -1, dist: Infinity };
+    (chart.data.labels || []).forEach((_, i) => {
+      const d = Math.abs(xScale.getPixelForValue(i) - x);
+      if (d < nearest.dist) nearest = { index: i, dist: d };
+    });
+    return nearest.index;
+  }
+
+  function dismiss() {
+    chart.tooltip.setActiveElements([], {});
+    chart.setActiveElements([]);
+    chart.update('none');
+  }
+
   function triggerTooltip(e) {
     e.preventDefault();
     const touch  = e.touches[0];
     const rect   = canvas.getBoundingClientRect();
     const x      = touch.clientX - rect.left;
-    const xScale = chart.scales.x;
-    if (!xScale) return;
-    let nearest = { index: -1, dist: Infinity };
-    chart.data.labels.forEach((_, i) => {
-      const d = Math.abs(xScale.getPixelForValue(i) - x);
-      if (d < nearest.dist) nearest = { index: i, dist: d };
-    });
-    if (nearest.index === -1) return;
-    const points = chart.data.datasets.map((_, dsIdx) => ({ datasetIndex: dsIdx, index: nearest.index }));
-    chart.tooltip.setActiveElements(points, { x, y: touch.clientY - rect.top });
+    const y      = touch.clientY - rect.top;
+    const idx    = findNearestIndex(x);
+    if (idx === -1) return;
+    const points = chart.data.datasets.map((_, dsIdx) => ({ datasetIndex: dsIdx, index: idx }));
+    chart.tooltip.setActiveElements(points, { x, y });
     chart.update('none');
   }
-  canvas.addEventListener('touchstart', triggerTooltip, { passive: false });
-  canvas.addEventListener('touchmove',  triggerTooltip, { passive: false });
-  // Dismiss tooltip when user taps anywhere outside this canvas
-  document.addEventListener('touchstart', function dismissOutside(e) {
-    if (!canvas.contains(e.target)) {
-      chart.tooltip.setActiveElements([], {});
-      chart.update('none');
-    }
-  }, { passive: true });
+
+  canvas.addEventListener('touchstart',  triggerTooltip, { passive: false });
+  canvas.addEventListener('touchmove',   triggerTooltip, { passive: false });
+  canvas.addEventListener('touchend',    dismiss,        { passive: true });
+  canvas.addEventListener('mouseleave',  dismiss,        { passive: true });
+  document.addEventListener('touchstart', e => { if (!canvas.contains(e.target)) dismiss(); }, { passive: true });
 }
 
 function setPeriod(days) {
